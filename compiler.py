@@ -174,12 +174,18 @@ def compileLine(line, binary_file, test_file):
 
 compiler("init_test")
 # b_file = open("b_test.b", "wb")
-# test = bytes.fromhex('af50')
-# te = b'1000'
-# one_byte = int('11111000', 2)
-# single_byte = one_byte.to_bytes(1, byteorder='big', signed=False) 
+# one_byte = int('00000001001100000000000000100011', 2)
+# inte = 19922979
+# single_byte = inte.to_bytes(4, byteorder='big', signed=False) 
+# bytetest = b'\x010\x00#'
+# int_val = int.from_bytes(bytetest, "big")
+# print(int_val)
 # b_file.write(single_byte)
 # b_file.close()
+
+# with open("b_test.b", "rb") as bin_file:
+#     data = bin_file.read()
+#     print(data)
 
 with open("init_test.b", "rb") as bin_file:
     data = bin_file.read()
