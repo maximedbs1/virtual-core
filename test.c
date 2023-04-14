@@ -3,32 +3,46 @@
 #include <string.h>
 #include <stdbool.h>
 
-unsigned long long* init_registers(char* state);
+struct instruction {
+    bool ivf;
+    int opcode;
+    int ope1;
+    int ope2;
+    int dest;
+    int iv;
+};
+
+unsigned long long* init_registers(char* state, unsigned long long* registers);
 unsigned long fetch(char* file, int pc);
-int decode(unsigned long operation);
-int execute(bool ivf, int opcode, int ope1, int ope2, int dest, int iv, unsigned long long **registers);
+struct instruction decode(unsigned long operation);
+void execute(struct instruction i, unsigned long long* registers);
 
 int main(int argc, char **argv) {
+    //TODO: if argc != 2 -> erreur nb d'arg invalide, exit
+
     unsigned long long* registers;
     registers = (unsigned long long*) malloc(16 * sizeof(unsigned long long));
-    //TODO: if argc != 2 -> erreur nb d'arg invalide, exit
     
-    registers = init_registers(argv[2]);
+    registers = init_registers(argv[2], registers);
     for(int i = 0; i<16; i++){
-        printf("R%d = %llu\n", i, registers[i]);
+        printf("R%d = %llx, ", i, registers[i]);
     }
+    printf("\n");
 
-    //printf("fetching the instruction ...\n");
-    //hex_instruction = fetch("init_test.b", 2);
+    struct instruction i;
+    unsigned long hex_instruction;
 
-    //printf("decoding the instruction ...\n");
-    //decode(hex_instruction);
+    printf("fetching the instruction ...\n");
+    hex_instruction = fetch(argv[1], 0);
+
+    printf("decoding the instruction ...\n");
+    i = decode(hex_instruction);
+
+    printf("executing the instruction ...\n");
+    execute(i, registers);
 }
 
-unsigned long long* init_registers(char* state_file){
-    unsigned long long* registers;
-    registers = (unsigned long long*) malloc(16 * sizeof(unsigned long long));
-
+unsigned long long* init_registers(char* state_file, unsigned long long* registers){
     FILE *file = NULL;
     file = fopen(state_file, "r");
 
@@ -53,7 +67,7 @@ unsigned long long* init_registers(char* state_file){
 
 unsigned long fetch(char* instruction_file, int pc){
     FILE *file = NULL;
-    int c, i;
+    int i;
 
     unsigned char* instruction;
     instruction = malloc(4);
@@ -81,53 +95,94 @@ unsigned long fetch(char* instruction_file, int pc){
 
     fclose(file);
 
-    return hex_instruction;
-
-    //TODO: read instruction 32*pc in file
     //TODO: if last 4bit != 0000 -> decode this specific structure of operation
     //TODO: compute the new value of the pc (+1 or specific number)
+
+    return hex_instruction;
 }
 
-int decode(unsigned long operation){
-    bool ivf = (operation & 0x0f000000) >> 24;
-    int opcode = (operation & 0x00f00000) >> 20;
-    int ope1 = (operation & 0x000f0000) >> 16;
-    int ope2 = (operation & 0x0000f000) >> 12;
-    int dest = (operation & 0x00000f00) >> 8;
-    int iv = (operation & 0x000000ff);
+struct instruction decode(unsigned long operation){
+    struct instruction i;
 
-    printf("ivf : %d / opcode : %x / ope1 : %x / ope2 : %x / dest : %x / iv : %x\n", ivf, opcode, ope1, ope2, dest, iv);
+    i.ivf = (operation & 0x0f000000) >> 24;
+    i.opcode = (operation & 0x00f00000) >> 20;
+    i.ope1 = (operation & 0x000f0000) >> 16;
+    i.ope2 = (operation & 0x0000f000) >> 12;
+    i.dest = (operation & 0x00000f00) >> 8;
+    i.iv = (operation & 0x000000ff);
 
-    return 0;
+    printf("ivf : %d / opcode : %x / ope1 : %x / ope2 : %x / dest : %x / iv : %x\n", i.ivf, i.opcode, i.ope1, i.ope2, i.dest, i.iv);
+
+    return i;
 }
 
-int execute(bool ivf, int opcode, int ope1, int ope2, int dest, int iv, unsigned long long **registers){
-    switch(opcode){
+void execute(struct instruction i, unsigned long long* registers){
+    switch(i.opcode){
         //AND
-        case 0:
-            if(ivf){
-                dest = registers[ope1] && iv;
+        // case 0:
+        //     printf("AND\n");
+        //     if(i.ivf){
+        //         registers[i.dest] = registers[i.ope1] && i.iv;
+        //     } else {
+        //         registers[i.dest] = registers[i.ope1] && registers[i.ope2];
+        //     }
+        //     break;
+        // //OR
+        // case 1:
+        //     printf("OR\n");
+        //     if(i.ivf){
+        //         registers[i.dest] = registers[i.ope1] || i.iv;
+        //     } else {
+        //         registers[i.dest] = registers[i.ope1] || registers[i.ope2];
+        //     }
+        //     break;
+        // //XOR
+        // case 2:
+        //     printf("XOR\n");
+        //     if(i.ivf){
+        //         registers[i.dest] = registers[i.ope1] != i.iv;
+        //     } else {
+        //         registers[i.dest] = registers[i.ope1] != registers[i.ope2];
+        //     }
+        //     break;
+        case 3:
+            printf("ADD\n");
+            if(i.ivf){
+                registers[i.dest] = registers[i.ope1] + i.iv;
             } else {
-                dest = registers[ope1] && registers[ope2];
+                registers[i.dest] = registers[i.ope1] + registers[i.ope2];
             }
             break;
-        //OR
-        case 1:
-            if(ivf){
-                dest = registers[ope1] || iv;
+        case 8:
+            printf("MOVE\n");
+            if(i.ivf){
+                registers[i.dest] = i.iv;
             } else {
-                dest = registers[ope1] || registers[ope2];
+                registers[i.dest] = registers[i.ope2];
             }
             break;
-        //XOR
-        case 2:
-            if(ivf){
-                dest = registers[ope1] != iv;
+        case 9:
+            printf("LEFT SHIFT\n");
+            if(i.ivf){
+                registers[i.dest] = registers[i.ope1] << i.iv;
             } else {
-                dest = registers[ope1] != registers[ope2];
+                registers[i.dest] = registers[i.ope1] << registers[i.ope2];
+            }
+            break;
+        case 10:
+            printf("RIGHT SHIFT\n");
+            if(i.ivf){
+                registers[i.dest] = registers[i.ope1] >> i.iv;
+            } else {
+                registers[i.dest] = registers[i.ope1] >> registers[i.ope2];
             }
             break;
         //TODO: continuer pour tous les opcodes existants
-    return 0;
+        default:
+            printf("default case reached in execution switch\n");
     }
+    for(int i = 0; i<16; i++){
+        printf("R%d = %llx, ", i, registers[i]);
+    }
+    printf("\n");
 }
