@@ -9,17 +9,20 @@ int decode(unsigned long operation);
 int execute(bool ivf, int opcode, int ope1, int ope2, int dest, int iv, unsigned long long **registers);
 
 int main(int argc, char **argv) {
-    unsigned long hex_instruction;
+    unsigned long long* registers;
+    registers = (unsigned long long*) malloc(16 * sizeof(unsigned long long));
     //TODO: if argc != 2 -> erreur nb d'arg invalide, exit
-    //init_registers(argv[2]);
-    //unsigned long operation = 0x01320104;
-    //decode(operation);
+    
+    registers = init_registers(argv[2]);
+    for(int i = 0; i<16; i++){
+        printf("R%d = %llu\n", i, registers[i]);
+    }
 
-    printf("fetching the instruction ...\n");
-    hex_instruction = fetch("init_test.b", 2);
+    //printf("fetching the instruction ...\n");
+    //hex_instruction = fetch("init_test.b", 2);
 
-    printf("decoding the instruction ...\n");
-    decode(hex_instruction);
+    //printf("decoding the instruction ...\n");
+    //decode(hex_instruction);
 }
 
 unsigned long long* init_registers(char* state_file){
@@ -27,49 +30,24 @@ unsigned long long* init_registers(char* state_file){
     registers = (unsigned long long*) malloc(16 * sizeof(unsigned long long));
 
     FILE *file = NULL;
-    int c;
-
     file = fopen(state_file, "r");
 
     if(file==NULL){
         printf("Erreur dans l'ouverture du fichier des registres\n");
-        exit(1);   
+        exit(1);
     }
 
-    char number[32];
-    bool trigger = 0;
+    char buffer[256];
+    int i=0;
 
-    do {
-        c = fgetc(file);
-        printf("%c\n", c);
-        if(feof(file)){
-            break ;
+    while(fgets(buffer, 256, file) && i<16){
+        unsigned long long val;
+        if(sscanf(buffer, "R%d=0x%llx", &i, &val) == 2){
+            registers[i] = val;
         }
-        if(trigger == 1){
-            printf("hello trigger\n");
-            if(c == '\n'){
-                printf("stop trigger\n");
-                trigger == 0;
-            } else {
-                printf("else");
-                strcat(number, (char)(c));
-                printf("number = %s\n", number);
-            }
-        }
-        if(c == 'x'){
-            printf("trigger\n");
-            trigger = 1;
-        }
-    } while(1);
-
-    printf("%s\n", number);
-
-    //for(int i=0; i<16; i++){
-    //    printf("reg %d = %llu\n", i, registers[i]);
-    //}
+    }
 
     fclose(file);
-
     return registers;
 }
 
@@ -118,7 +96,7 @@ int decode(unsigned long operation){
     int dest = (operation & 0x00000f00) >> 8;
     int iv = (operation & 0x000000ff);
 
-    printf("ivf : %d\nopcode : %x\nope1 : %x\nope2 : %x\ndest : %x\niv : %x\n", ivf, opcode, ope1, ope2, dest, iv);
+    printf("ivf : %d / opcode : %x / ope1 : %x / ope2 : %x / dest : %x / iv : %x\n", ivf, opcode, ope1, ope2, dest, iv);
 
     return 0;
 }
