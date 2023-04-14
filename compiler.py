@@ -1,8 +1,14 @@
 def compiler(filename):
+    #Ouvrir le fichier assembleyr
     file = open(filename + ".s", "r")
-    line = file.readline()
-    binary_file = open(filename + ".b", "ab")
+    line = file.readline()  
+
+    #Ouvrir le fichier binaire
+    binary_file = open(filename + ".b", "wb")
+    #Fichier texte de test
     test_file = open("test.txt", "w")
+
+    #Compilation ligne par ligne
     while line:
         compileLine(line, binary_file, test_file)
         line = file.readline()
