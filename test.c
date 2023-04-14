@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    for(int i=0; i<18; i++){
+    for(int i=0; i<30; i++){
         printf("---------- NEW INSTRUCTION ----------\n");
         struct instruction inst;
         unsigned long hex_instruction;
