@@ -156,14 +156,14 @@ def compileLine(line, binary_file, test_file):
                     temp_iv = iv
                     iv = ""
                 #shift
-                shift = "00000001100100000000" + dest + "00001000"
+                shift = "000000011001" + dest + "0000" + dest + "00001000"
                 bin_shift = int(shift, 2)
                 shift_octet = bin_shift.to_bytes(4, byteorder='big', signed=False)
                 binary_file.write(shift_octet)
                 test_file.write(shift)
                 test_file.write("\n")
                 #ajout d'un octet
-                add = "00000001001100000000" + dest + temp_iv
+                add = "000000010011" + dest + "0000" + dest + temp_iv
                 bin_add = int(add, 2)
                 add_octet = bin_add.to_bytes(4, byteorder='big', signed=False)
                 binary_file.write(add_octet)
