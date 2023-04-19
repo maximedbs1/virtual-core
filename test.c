@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    for(int i=0; i<30; i++){
+    for(int i=0; i<45; i++){
         printf("---------- NEW INSTRUCTION ----------\n");
         struct instruction inst;
         unsigned long hex_instruction;
@@ -154,6 +154,14 @@ void execute(struct instruction inst, unsigned long long* registers){
                 registers[inst.dest] = registers[inst.ope1] + inst.iv;
             } else {
                 registers[inst.dest] = registers[inst.ope1] + registers[inst.ope2];
+            }
+            break;
+        case 6:
+            printf("SUB\n");
+            if(inst.ivf){
+                registers[inst.dest] = registers[inst.ope1] - inst.iv;
+            } else {
+                registers[inst.dest] = registers[inst.ope1] - registers[inst.ope2];
             }
             break;
         case 8:
