@@ -21,6 +21,8 @@ def decToBin(nb):
         while nb != 0:
             ret = str(nb%2) + ret
             nb = nb // 2
+        while len(ret)%8 != 0:
+            ret= "0" + ret
         return ret
 
 def hexaToDec(nb_str):
@@ -50,8 +52,6 @@ def hexaToBin(nb_str):
         nb_str=nb_str.replace(nb_str[0:2],"",1)
     nb = hexaToDec(nb_str)
     nb_bin = decToBin(nb)
-    while len(nb_bin)%8 != 0:
-        nb_bin= "0" + nb_bin
     return nb_bin
 
 def compileLine(line, binary_file, test_file):
@@ -91,6 +91,7 @@ def compileLine(line, binary_file, test_file):
         inst = inst + "0000000"
 
         #Vérification de la présence d'une immediat value
+        iv=""
         verif_iv = False
         for i in range(0, len(line)):
             if line[i] == " " and line[i+1] != "r":
@@ -99,6 +100,7 @@ def compileLine(line, binary_file, test_file):
             inst = inst + "1"
         else:
             inst = inst + "0"
+            iv = "00000000"
         
         #Conversion du code de l'instruction
         inst = inst + dicocode[line[0:3]]
@@ -108,7 +110,7 @@ def compileLine(line, binary_file, test_file):
         dest = dicoreg[line[0:2]]
         line = line.replace(line[0:4],"",1)
 
-        iv=""
+
         while len(line) > 0:
             if line[0] == "r":
                 inst = inst + dicoreg[line[0:2]]
