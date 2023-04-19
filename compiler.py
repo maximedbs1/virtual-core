@@ -122,7 +122,7 @@ def compileLine(line, binary_file, test_file):
                     if line[0:2] == "0x":
                         iv = hexaToBin(line[0:j+1])
                     else:
-                        iv = decToBin(line[0:j+1])
+                        iv = decToBin(int(line[0:j+1]))
                     line = line.replace(line[0:j+1],"",1)
                 else:
                     if line[0:2] == "0x":
@@ -181,7 +181,7 @@ def compileLine(line, binary_file, test_file):
     
         
 
-compiler("init_test")
+compiler("lshift64_128_test")
 # b_file = open("b_test.b", "wb")
 # one_byte = int('00000001001100000000000000100011', 2)
 # inte = 19922979
@@ -196,7 +196,7 @@ compiler("init_test")
 #     data = bin_file.read()
 #     print(data)
 
-with open("init_test.b", "rb") as bin_file:
+with open("lshift64_128_test.b", "rb") as bin_file:
     data = bin_file.read()
     print(data)
 
