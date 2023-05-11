@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdbool.h>
 
+// Structure d'une instruction basique
 struct instruction {
     bool ivf;
     int opcode;
@@ -12,30 +13,45 @@ struct instruction {
     int iv;
 };
 
+// Structure d'une instruction de type jump
+struct j_instruction {
+    int bcc;
+    bool sign;
+    int new_pc;
+};
+
+// Variables ProgramCounter et valeur de Comparaison
+int PC = 0;
+int CMP = 0;
+
 unsigned long long* init_registers(char* state, unsigned long long* registers);
-unsigned long fetch(char* file, int pc);
+unsigned long fetch(char* file);
 struct instruction decode(unsigned long operation);
 void execute(struct instruction i, unsigned long long* registers);
 
 int main(int argc, char **argv) {
     //TODO: if argc != 2 -> erreur nb d'arg invalide, exit
 
+    // Création des registres et allocation mémoire
     unsigned long long* registers;
     registers = (unsigned long long*) malloc(16 * sizeof(unsigned long long));
     
+    // Initialisation des registres suivant le fichier d'initialisation donné
     registers = init_registers(argv[2], registers);
     for(int i = 0; i<16; i++){
         printf("R%d = %llx, ", i, registers[i]);
     }
     printf("\n");
 
+    // ARRETER LE PROGRAMME AUTOMATIQUEMENT A LA FIN
     for(int i=0; i<4; i++){
+        PC = i;
         printf("---------- NEW INSTRUCTION ----------\n");
         struct instruction inst;
         unsigned long hex_instruction;
 
         printf("...fetching the instruction...\n");
-        hex_instruction = fetch(argv[1], i);
+        hex_instruction = fetch(argv[1]);
 
         printf("...decoding the instruction...\n");
         inst = decode(hex_instruction);
@@ -45,6 +61,7 @@ int main(int argc, char **argv) {
     }
 }
 
+// Fonction d'initialisation des registres en lisant le fichier passé en paramètres
 unsigned long long* init_registers(char* state_file, unsigned long long* registers){
     FILE *file = NULL;
     file = fopen(state_file, "r");
@@ -59,6 +76,7 @@ unsigned long long* init_registers(char* state_file, unsigned long long* registe
 
     while(fgets(buffer, 256, file) && i<16){
         unsigned long long val;
+        // Utilisation d'une regex pour récupérer dynamiquement les valeurs des différents registres
         if(sscanf(buffer, "R%d=0x%llx", &i, &val) == 2){
             registers[i] = val;
         }
@@ -68,10 +86,12 @@ unsigned long long* init_registers(char* state_file, unsigned long long* registe
     return registers;
 }
 
-unsigned long fetch(char* instruction_file, int pc){
+// Fonction de lecture d'instruction et calcul du nouveau PC
+unsigned long fetch(char* instruction_file){
     FILE *file = NULL;
     int i;
 
+    // Création de la variable de stockage de l'instruction + allocation mémoire
     unsigned char* instruction;
     instruction = malloc(4);
     unsigned long hex_instruction = 0;
@@ -83,7 +103,8 @@ unsigned long fetch(char* instruction_file, int pc){
         exit(1);   
     }
 
-    fseek(file, 4*pc, SEEK_SET);
+    // On place le curseur au bon endroit dans le fichier d'instruction en fonction du PC avant de la lire
+    fseek(file, 4*PC, SEEK_SET);
     fread(instruction, 4, 1, file);
 
     printf("fetched instruction : ");
@@ -92,14 +113,31 @@ unsigned long fetch(char* instruction_file, int pc){
     }
     printf("\n");
 
+    // On reconstruit l'instruction en hexadécimal
     hex_instruction = (instruction[0]<<24) | (instruction[1]<<16) | (instruction[2]<<8) | instruction[3];
 
     printf("hex instruction : %lx\n", hex_instruction);
 
-    fclose(file);
+    // S'il s'agit d'une instruction de type jump :
+    if((hex_instruction && 0xf0000000) != 0x0){
+        printf("Branch Instruction\n");
+        struct j_instruction inst;
 
-    //TODO: if last 4bit != 0000 -> decode this specific structure of operation
-    //TODO: compute the new value of the pc (+1 or specific number)
+        // On décode l'instruction jump directement
+        inst.bcc = (hex_instruction && 0xf0000000) >> 24;
+        inst.sign = (hex_instruction && 0x08000000) >> 23;
+        inst.new_pc = (hex_instruction && 0x07ffffff);
+
+        printf("bcc : %d / sign : %d / new_pc : %d", inst.bcc, inst.sign, inst.new_pc);
+
+        // On calcule la nouvelle valeur du PC
+        PC = inst.new_pc;
+    }
+
+    // Sinon on incrémente simplement le PC et on retourne l'instruction en hexa
+    PC = PC+1;
+
+    fclose(file);
 
     return hex_instruction;
 }
