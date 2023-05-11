@@ -76,6 +76,8 @@ def compileLine(line, binary_file, test_file):
         if line[0] == "-":
             inst = inst + "1"
             line = line.replace(line[0],"",1)
+        else:
+            inst = inst + "0"
         val = int(line)
         binval = decToBin(val)
         while len(binval) < 26:
@@ -107,8 +109,9 @@ def compileLine(line, binary_file, test_file):
         line = line.replace(line[0:4],"",1)
 
         #Récupération du registre de destination
-        dest = dicoreg[line[0:2]]
-        line = line.replace(line[0:4],"",1)
+        if line[3] == " ":
+            dest = dicoreg[line[0:2]]
+            line = line.replace(line[0:4],"",1)
 
 
         while len(line) > 0:
@@ -183,7 +186,7 @@ def compileLine(line, binary_file, test_file):
     
         
 
-compiler("lshift64_128_test")
+compiler("test")
 # b_file = open("b_test.b", "wb")
 # one_byte = int('00000001001100000000000000100011', 2)
 # inte = 19922979
@@ -198,7 +201,7 @@ compiler("lshift64_128_test")
 #     data = bin_file.read()
 #     print(data)
 
-with open("lshift64_128_test.b", "rb") as bin_file:
+with open("test.b", "rb") as bin_file:
     data = bin_file.read()
     print(data)
 
