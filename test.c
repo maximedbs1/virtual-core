@@ -29,7 +29,7 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    for(int i=0; i<45; i++){
+    for(int i=0; i<4; i++){
         printf("---------- NEW INSTRUCTION ----------\n");
         struct instruction inst;
         unsigned long hex_instruction;
@@ -121,33 +121,30 @@ struct instruction decode(unsigned long operation){
 
 void execute(struct instruction inst, unsigned long long* registers){
     switch(inst.opcode){
-        //AND
-        // case 0:
-        //     printf("AND\n");
-        //     if(i.ivf){
-        //         registers[i.dest] = registers[i.ope1] && i.iv;
-        //     } else {
-        //         registers[i.dest] = registers[i.ope1] && registers[i.ope2];
-        //     }
-        //     break;
-        // //OR
-        // case 1:
-        //     printf("OR\n");
-        //     if(i.ivf){
-        //         registers[i.dest] = registers[i.ope1] || i.iv;
-        //     } else {
-        //         registers[i.dest] = registers[i.ope1] || registers[i.ope2];
-        //     }
-        //     break;
-        // //XOR
-        // case 2:
-        //     printf("XOR\n");
-        //     if(i.ivf){
-        //         registers[i.dest] = registers[i.ope1] != i.iv;
-        //     } else {
-        //         registers[i.dest] = registers[i.ope1] != registers[i.ope2];
-        //     }
-        //     break;
+        case 0:
+            printf("AND\n");
+            if(inst.ivf){
+                registers[inst.dest] = registers[inst.ope1] && inst.iv;
+            } else {
+                registers[inst.dest] = registers[inst.ope1] && registers[inst.ope2];
+            }
+            break;
+        case 1:
+            printf("OR\n");
+            if(inst.ivf){
+                registers[inst.dest] = registers[inst.ope1] || inst.iv;
+            } else {
+                registers[inst.dest] = registers[inst.ope1] || registers[inst.ope2];
+            }
+            break;
+        case 2:
+            printf("XOR\n");
+            if(inst.ivf){
+                registers[inst.dest] = registers[inst.ope1] != inst.iv;
+            } else {
+                registers[inst.dest] = registers[inst.ope1] != registers[inst.ope2];
+            }
+            break;
         case 3:
             printf("ADD\n");
             if(inst.ivf){
@@ -188,7 +185,6 @@ void execute(struct instruction inst, unsigned long long* registers){
                 registers[inst.dest] = registers[inst.ope1] >> registers[inst.ope2];
             }
             break;
-        //TODO: continuer pour tous les opcodes existants
         default:
             printf("default case reached in execution switch\n");
     }
