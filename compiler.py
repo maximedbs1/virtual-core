@@ -80,7 +80,7 @@ def compileLine(line, binary_file, test_file):
             inst = inst + "0"
         val = int(line)
         binval = decToBin(val)
-        while len(binval) < 26:
+        while len(binval) < 27:
             binval = "0" + binval
         inst = inst + binval
         bin_inst = int(inst, 2)
