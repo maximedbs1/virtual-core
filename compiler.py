@@ -11,6 +11,7 @@ def compiler(filename):
         compileLine(line, binary_file)
         line = file.readline()
 
+#conversion d'un décimal en binaire (renvoit une chaine de caractère)
 def decToBin(nb):
     if nb == 0:
         return "0"
@@ -23,6 +24,7 @@ def decToBin(nb):
             ret= "0" + ret
         return ret
 
+#conversion d'un hexa en décimal (renvoit un int)
 def hexaToDec(nb_str):
     ret = 0
     coeff = 0
@@ -45,6 +47,7 @@ def hexaToDec(nb_str):
     return ret
 
 
+#conversion d'un hexa en binaire (renvoit une chaine de caractère)
 def hexaToBin(nb_str):
     if nb_str[0:2] == "0x":
         nb_str=nb_str.replace(nb_str[0:2],"",1)
@@ -52,17 +55,24 @@ def hexaToBin(nb_str):
     nb_bin = decToBin(nb)
     return nb_bin
 
+
+#fonction qui compile une instruction
 def compileLine(line, binary_file):
+    #Dictionnaires de concordances entre les différents codes des instructions et leur équivalent binaire
     dicobcc = {"BEQ":"1001", "BNE":"1010", "BLE":"1011", "BGE":"1100", "BL ":"1101", "BG ":"1111"}
     dicocode = {"AND":"0000", "ORR":"0001", "EOR":"0010", "ADD":"0011", "ADC":"0100", 
             "CMP":"0101", "SUB":"0110", "SBC":"0111", "MOV":"1000", "LSH":"1001", "RSH":"1010"}
     dicoreg = {"r0": "0000", "r1":"0001", "r2":"0010", "r3":"0011", "r4":"0100", "r5":"0101", "r6":"0110", "r7":"0111", "r8":"1000", "r9":"1001", "r10":"1010", "r11":"1011", "r12":"1100", "r13":"1101", "r14":"1110", "r15":"1111"}
+    
+    #chaine de caractère représentant l'instruction en binaire
     inst = ""
 
     line = line.replace("\n", "",1)
 
     #Cas d'une Branch Condition
     if line[0] == "B":
+
+        #récupération du code de la branch condition
         if line[1] == " ":
             inst = inst + "1000"
             line = line.replace(line[0:2],"",1)
@@ -71,11 +81,15 @@ def compileLine(line, binary_file):
             line = line.replace(line[0:4],"",1)
             if line[0] == " ":
                 line = line.replace(line[0],"",1)
+        
+        #on gère le signe du saut
         if line[0] == "-":
             inst = inst + "1"
             line = line.replace(line[0],"",1)
         else:
             inst = inst + "0"
+        
+        #On complète l'instruction avec la valeur du saut et des 0 si besoin
         val = int(line)
         binval = decToBin(val)
         while len(binval) < 27:
@@ -115,6 +129,8 @@ def compileLine(line, binary_file):
 
         #Récupération du reste de l'instruction
         while len(line) > 0:
+
+            #Récupération des autres registres si besoin
             if line[0] == "r":
                 if len(line) == 2:
                     inst = inst + dicoreg[line[0:2]]
@@ -128,6 +144,8 @@ def compileLine(line, binary_file):
                 else:
                     inst = inst + dicoreg[line[0:2]]
                     line = line.replace(line[0:4],"",1)
+            
+            #Récupération de l'immediat value si besoin
             else:
                 inst = inst + "0000"
                 j=0
@@ -145,6 +163,7 @@ def compileLine(line, binary_file):
                     else:
                         iv = decToBin(line[0:j])
                     line = line.replace(line[0:j],"",1)
+
 
         #S'il manque une opérande dans l'instruction
         if len(inst) < 20:
