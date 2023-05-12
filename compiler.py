@@ -186,7 +186,7 @@ def compileLine(line, binary_file, test_file):
     
         
 
-compiler("test")
+compiler("add128_test")
 # b_file = open("b_test.b", "wb")
 # one_byte = int('00000001001100000000000000100011', 2)
 # inte = 19922979

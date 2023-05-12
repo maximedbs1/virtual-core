@@ -1,15 +1,12 @@
 // TODO :
 // Voir jump qui ne marche pas au moment de la construction de hex_instruction
-// Boucle de fetch infinie + fetch renvoie 0 si EOF
-// Retenue (51+52(103) : 99-51 = 48; 52-48 = 4 -> carry de 4)
-//         (56+55(111) : 99-56 = 43; 55-43 = 12 -> carry de 12)
-// Finir commentaires
 // Makefile
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <limits.h>
 
 // Structure d'une instruction basique
 struct instruction {
@@ -32,6 +29,7 @@ struct j_instruction {
 int PC = 0;
 int CMP = 0;
 bool CARRY = 0;
+bool SUB_CARRY = 0;
 
 unsigned long long* init_registers(char* state, unsigned long long* registers);
 unsigned long fetch(char* file);
@@ -175,6 +173,7 @@ unsigned long fetch(char* instruction_file){
     return hex_instruction;
 }
 
+// Parsing de l'instruction hexa
 struct instruction decode(unsigned long operation){
     struct instruction inst;
 
@@ -190,6 +189,7 @@ struct instruction decode(unsigned long operation){
     return inst;
 }
 
+// Execution de l'instruction en fonction de l'opcode
 void execute(struct instruction inst, unsigned long long* registers){
     switch(inst.opcode){
         case 0:
@@ -217,20 +217,80 @@ void execute(struct instruction inst, unsigned long long* registers){
             }
             break;
         case 3:
+            // On vérifie qu'il n'y aura pas de dépassement
+            // Si dépassement, carry = 1 et on fait le calcul normalement (le résultat sera la partie droite du nombre final)
             printf("ADD\n");
             if(inst.ivf){
+                // On check quel est le max des 2 opérandes
+                if(registers[inst.ope1]>=inst.iv){
+                    // Un calcul + comparaison pour déterminer s'il y aura dépassement
+                    if((ULLONG_MAX-registers[inst.ope1])<inst.iv){
+                        CARRY = 1;
+                    }
+                } else {
+                    if((ULLONG_MAX-inst.iv)<registers[inst.ope1]){
+                        CARRY = 1;
+                    }
+                }
                 registers[inst.dest] = registers[inst.ope1] + inst.iv;
             } else {
+                if(registers[inst.ope1]>=registers[inst.ope2]){
+                    if((ULLONG_MAX-registers[inst.ope1])<registers[inst.ope2]){
+                        CARRY = 1;
+                    }
+                } else {
+                    if((ULLONG_MAX-registers[inst.ope2])<registers[inst.ope1]){
+                        CARRY = 1;
+                    }
+                }
                 registers[inst.dest] = registers[inst.ope1] + registers[inst.ope2];
             }
             break;
+        case 4:
+            // On ajoute toujours la carry, qui vaut 0 de toute façon s'il n'y en a pas
+            printf("ADC\n");
+            if(inst.ivf){
+                registers[inst.dest] = registers[inst.ope1] + inst.iv + (int)CARRY;
+            } else {
+                registers[inst.dest] = registers[inst.ope1] + registers[inst.ope2] + (int)CARRY;
+            }
+            CARRY = 0;
+            break;
         case 6:
+            // Même procédé que pour ADD
             printf("SUB\n");
             if(inst.ivf){
+                if(registers[inst.ope1]>=inst.iv){
+                    if((ULLONG_MAX-registers[inst.ope1])>inst.iv){
+                        SUB_CARRY = 1;
+                    }
+                } else {
+                    if((ULLONG_MAX-inst.iv)>registers[inst.ope1]){
+                        SUB_CARRY = 1;
+                    }
+                }
                 registers[inst.dest] = registers[inst.ope1] - inst.iv;
             } else {
+                if(registers[inst.ope1]>=registers[inst.ope2]){
+                    if((ULLONG_MAX-registers[inst.ope1])>registers[inst.ope2]){
+                        SUB_CARRY = 1;
+                    }
+                } else {
+                    if((ULLONG_MAX-registers[inst.ope2])>registers[inst.ope1]){
+                        SUB_CARRY = 1;
+                    }
+                }
                 registers[inst.dest] = registers[inst.ope1] - registers[inst.ope2];
             }
+            break;
+        case 7:
+            printf("SBC\n");
+            if(inst.ivf){
+                registers[inst.dest] = registers[inst.ope1] - inst.iv + (int)CARRY;
+            } else {
+                registers[inst.dest] = registers[inst.ope1] - registers[inst.ope2] - (int)CARRY;
+            }
+            SUB_CARRY = 0;
             break;
         case 8:
             printf("MOVE\n");
@@ -259,6 +319,7 @@ void execute(struct instruction inst, unsigned long long* registers){
         default:
             printf("default case reached in execution switch\n");
     }
+    // Affichage de la valeur des registres en fin d'instruction
     for(int i = 0; i<16; i++){
         printf("R%d = %llx, ", i, registers[i]);
     }
