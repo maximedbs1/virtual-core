@@ -1,3 +1,11 @@
+// TODO :
+// Voir jump qui ne marche pas au moment de la construction de hex_instruction
+// Boucle de fetch infinie + fetch renvoie 0 si EOF
+// Retenue (51+52(103) : 99-51 = 48; 52-48 = 4 -> carry de 4)
+//         (56+55(111) : 99-56 = 43; 55-43 = 12 -> carry de 12)
+// Finir commentaires
+// Makefile
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,6 +31,7 @@ struct j_instruction {
 // Variables ProgramCounter et valeur de Comparaison
 int PC = 0;
 int CMP = 0;
+bool CARRY = 0;
 
 unsigned long long* init_registers(char* state, unsigned long long* registers);
 unsigned long fetch(char* file);
@@ -30,7 +39,11 @@ struct instruction decode(unsigned long operation);
 void execute(struct instruction i, unsigned long long* registers);
 
 int main(int argc, char **argv) {
-    //TODO: if argc != 2 -> erreur nb d'arg invalide, exit
+    // On vérifie qu'on a bien récupéré 2 arguments lors de l'execution du programme
+    if (argc != 3) {
+        printf("Erreur : nombre d'arguments incorrect. Usage : %s fichier_binaire init_registres\n", argv[0]);
+        exit(EXIT_FAILURE);
+    }
 
     // Création des registres et allocation mémoire
     unsigned long long* registers;
@@ -44,7 +57,7 @@ int main(int argc, char **argv) {
     printf("\n");
 
     // ARRETER LE PROGRAMME AUTOMATIQUEMENT A LA FIN
-    for(int i=0; i<4; i++){
+    for(int i=0; i<45; i++){
         PC = i;
         printf("---------- NEW INSTRUCTION ----------\n");
         struct instruction inst;
@@ -119,19 +132,21 @@ unsigned long fetch(char* instruction_file){
     printf("hex instruction : %lx\n", hex_instruction);
 
     // S'il s'agit d'une instruction de type jump :
-    if((hex_instruction && 0xf0000000) != 0x0){
+    if(((hex_instruction && 0xf0000000) >> 28) != 0x0){
         printf("Branch Instruction\n");
         struct j_instruction inst;
 
         // On décode l'instruction jump directement
-        inst.bcc = (hex_instruction && 0xf0000000) >> 24;
-        inst.sign = (hex_instruction && 0x08000000) >> 23;
+        inst.bcc = (hex_instruction && 0xf0000000) >> 28;
+        inst.sign = (hex_instruction && 0x08000000) >> 27;
         inst.new_pc = (hex_instruction && 0x07ffffff);
 
-        printf("bcc : %d / sign : %d / new_pc : %d", inst.bcc, inst.sign, inst.new_pc);
+        printf("bcc : %d / sign : %d / new_pc : %d\n", inst.bcc, inst.sign, inst.new_pc);
 
         // On calcule la nouvelle valeur du PC
         PC = inst.new_pc;
+
+        return 0;
     }
 
     // Sinon on incrémente simplement le PC et on retourne l'instruction en hexa
