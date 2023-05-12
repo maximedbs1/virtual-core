@@ -5,12 +5,10 @@ def compiler(filename):
 
     #Ouvrir le fichier binaire
     binary_file = open(filename + ".b", "wb")
-    #Fichier texte de test
-    test_file = open("test.txt", "w")
 
     #Compilation ligne par ligne
     while line:
-        compileLine(line, binary_file, test_file)
+        compileLine(line, binary_file)
         line = file.readline()
 
 def decToBin(nb):
@@ -54,7 +52,7 @@ def hexaToBin(nb_str):
     nb_bin = decToBin(nb)
     return nb_bin
 
-def compileLine(line, binary_file, test_file):
+def compileLine(line, binary_file):
     dicobcc = {"BEQ":"1001", "BNE":"1010", "BLE":"1011", "BGE":"1100", "BL ":"1101", "BG ":"1111"}
     dicocode = {"AND":"0000", "ORR":"0001", "EOR":"0010", "ADD":"0011", "ADC":"0100", 
             "CMP":"0101", "SUB":"0110", "SBC":"0111", "MOV":"1000", "LSH":"1001", "RSH":"1010"}
@@ -86,7 +84,6 @@ def compileLine(line, binary_file, test_file):
         bin_inst = int(inst, 2)
         octet = bin_inst.to_bytes(4, byteorder='big', signed=False)
         binary_file.write(octet)
-        test_file.write(inst)
 
     #Cas d'une instruction classique
     else:
@@ -112,12 +109,25 @@ def compileLine(line, binary_file, test_file):
         if line[3] == " ":
             dest = dicoreg[line[0:2]]
             line = line.replace(line[0:4],"",1)
+        else:
+            dest = dicoreg[line[0:3]]
+            line = line.replace(line[0:5],"",1)
 
-
+        #Récupération du reste de l'instruction
         while len(line) > 0:
             if line[0] == "r":
-                inst = inst + dicoreg[line[0:2]]
-                line = line.replace(line[0:4],"",1)
+                if len(line) == 2:
+                    inst = inst + dicoreg[line[0:2]]
+                    line = line.replace(line[0:4],"",1)
+                elif len(line) == 3:
+                    inst = inst + dicoreg[line[0:3]]
+                    line = line.replace(line[0:5],"",1)
+                elif line[3] == ",":
+                    inst = inst + dicoreg[line[0:3]]
+                    line = line.replace(line[0:5],"",1)
+                else:
+                    inst = inst + dicoreg[line[0:2]]
+                    line = line.replace(line[0:4],"",1)
             else:
                 inst = inst + "0000"
                 j=0
@@ -147,8 +157,6 @@ def compileLine(line, binary_file, test_file):
             bin_inst = int(inst, 2)
             octet = bin_inst.to_bytes(4, byteorder='big', signed=False)
             binary_file.write(octet)
-            test_file.write(inst)
-            test_file.write("\n")
             iv = iv.replace(iv[0:8],"",1)
             temp_iv = ""
 
@@ -165,15 +173,11 @@ def compileLine(line, binary_file, test_file):
                 bin_shift = int(shift, 2)
                 shift_octet = bin_shift.to_bytes(4, byteorder='big', signed=False)
                 binary_file.write(shift_octet)
-                test_file.write(shift)
-                test_file.write("\n")
                 #ajout d'un octet
                 add = "000000010011" + dest + "0000" + dest + temp_iv
                 bin_add = int(add, 2)
                 add_octet = bin_add.to_bytes(4, byteorder='big', signed=False)
                 binary_file.write(add_octet)
-                test_file.write(add)
-                test_file.write("\n")
 
         #Cas d'une immediat value de taille inférieure à un octet
         else:
@@ -181,29 +185,11 @@ def compileLine(line, binary_file, test_file):
             bin_inst = int(inst, 2)
             octet = bin_inst.to_bytes(4, byteorder='big', signed=False)
             binary_file.write(octet)
-            test_file.write(inst)
 
     
         
 
 compiler("test")
-# b_file = open("b_test.b", "wb")
-# one_byte = int('00000001001100000000000000100011', 2)
-# inte = 19922979
-# single_byte = inte.to_bytes(4, byteorder='big', signed=False) 
-# bytetest = b'\x010\x00#'
-# int_val = int.from_bytes(bytetest, "big")
-# print(int_val)
-# b_file.write(single_byte)
-# b_file.close()
-
-# with open("b_test.b", "rb") as bin_file:
-#     data = bin_file.read()
-#     print(data)
-
-with open("test.b", "rb") as bin_file:
-    data = bin_file.read()
-    print(data)
 
 
 
