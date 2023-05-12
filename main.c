@@ -11,18 +11,18 @@
 // Structure d'une instruction basique
 struct instruction {
     bool ivf;
-    int opcode;
-    int ope1;
-    int ope2;
-    int dest;
-    int iv;
+    unsigned int opcode;
+    unsigned int ope1;
+    unsigned int ope2;
+    unsigned int dest;
+    unsigned int iv;
 };
 
 // Structure d'une instruction de type jump
 struct j_instruction {
-    int bcc;
+    unsigned int bcc;
     bool sign;
-    int new_pc;
+    unsigned int new_pc;
 };
 
 // Variables ProgramCounter et valeur de Comparaison
