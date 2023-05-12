@@ -56,15 +56,21 @@ int main(int argc, char **argv) {
     }
     printf("\n");
 
-    // ARRETER LE PROGRAMME AUTOMATIQUEMENT A LA FIN
-    for(int i=0; i<45; i++){
-        PC = i;
+    bool stop = 1;
+    // On fait tourner le programme en boucle jusqu'a ce que la fonction fetch renvoie "0x0" (indique la fin du fichier)
+    while(stop){
         printf("---------- NEW INSTRUCTION ----------\n");
         struct instruction inst;
         unsigned long hex_instruction;
 
         printf("...fetching the instruction...\n");
         hex_instruction = fetch(argv[1]);
+
+        // Vérification de fin de fichier
+        if(hex_instruction == 0x0){
+            printf("Fin du programme\n");
+            return 0;
+        }
 
         printf("...decoding the instruction...\n");
         inst = decode(hex_instruction);
@@ -118,8 +124,20 @@ unsigned long fetch(char* instruction_file){
 
     // On place le curseur au bon endroit dans le fichier d'instruction en fonction du PC avant de la lire
     fseek(file, 4*PC, SEEK_SET);
-    fread(instruction, 4, 1, file);
+    int n = fread(instruction, 4, 1, file);
 
+    // Si on a pas lu un bloc entier avec fread -> fin du fichier
+    if (n != 1) {
+        printf("Erreur lors de la lecture du fichier d'instructions\n");
+    }
+
+    // On vérifie si on est bien à la fin du fichier
+    if (feof(file)) {
+        printf("Fin du fichier atteinte\n");
+        return 0x0;
+    }
+
+    // On affiche l'instruction lue (pour du debug)
     printf("fetched instruction : ");
     for(i=0;i<4;i++){
         printf("%02x ", instruction[i]);
